@@ -1,8 +1,8 @@
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 
@@ -88,8 +88,10 @@ public class Main {
             glBufferData(GL_ARRAY_BUFFER, squareVerts, GL_STATIC_DRAW);
             glEnableVertexAttribArray(Shaders.Attribute.POSITION.position);
             glVertexAttribPointer(Shaders.Attribute.POSITION.position,
-                2, GL_FLOAT, false, 0, 0);
+                2, GL_FLOAT, false, 4 * 2, 0);
         }
+
+        Font arial = new Font("arial.ttf", 32, 512, 512);
 
         glfwSetWindowSizeCallback(window, (long window, int width, int height) -> {
             this.resize(width, height);
@@ -101,7 +103,7 @@ public class Main {
 
             try(MemoryStack stack = MemoryStack.stackPush()) {
                 Matrix4f test = new Matrix4f();
-                test.translate(100, 100, 0);
+                test.translate(400, 100, 0);
                 test.scale(100);
                 FloatBuffer buffer = stack.mallocFloat(16);
                 glUseProgram(simpleShader);
@@ -111,9 +113,13 @@ public class Main {
                 glDrawArrays(GL_TRIANGLES, 0, 6);
             }
 
+            arial.draw("Hello World!", 800, 800, proj);
+
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+
+        arial.cleanUp();
 
         glDeleteProgram(simpleShader);
 
