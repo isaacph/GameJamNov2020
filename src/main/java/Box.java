@@ -62,13 +62,25 @@ public class Box {
                 b.shadow(new Vector2f(0, 1)));
     }
 
+    public static Vector2f resolveX(Box pusher, Box mover) {
+        if(!intersect(pusher, mover)) {
+            return new Vector2f(0);
+        }
+        return new Vector2f(Shadow.resolveIntersect(
+            pusher.shadow(new Vector2f(1, 0)), mover.shadow(new Vector2f(1, 0))
+        ), 0);
+    }
+
+    public static Vector2f resolveY(Box pusher, Box mover) {
+        if(!intersect(pusher, mover)) {
+            return new Vector2f(0);
+        }
+        return new Vector2f(0, Shadow.resolveIntersect(
+            pusher.shadow(new Vector2f(0, 1)), mover.shadow(new Vector2f(0, 1))
+        ));
+    }
+
     public static Vector2f resolve(Box pusher, Box mover) {
-        return Shadow.absMin(
-            new Vector2f(Shadow.resolveIntersect(
-                pusher.shadow(new Vector2f(1, 0)), mover.shadow(new Vector2f(1, 0))
-            ), 0),
-            new Vector2f(0, Shadow.resolveIntersect(
-                pusher.shadow(new Vector2f(0, 1)), mover.shadow(new Vector2f(0, 1)))
-            ));
+        return Shadow.absMin(resolveX(pusher, mover), resolveY(pusher, mover));
     }
 }

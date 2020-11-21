@@ -3,15 +3,10 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import org.lwjgl.system.MemoryStack;
-
-import java.nio.FloatBuffer;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -45,9 +40,6 @@ public class Main {
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-
-
-
         glfwSetWindowSizeCallback(window, (long window, int width, int height) -> {
             this.resize(width, height);
         });
@@ -55,15 +47,15 @@ public class Main {
 
         BoxRenderer boxRenderer = new BoxRenderer();
         Font arial = new Font("arial.ttf", 32, 512, 512);
-        TileGridRenderer gridRenderer = new TileGridRenderer();
-        gridRenderer.loadGrid(new byte[][]{
-            {1, 1, 1, 1},
-            {1, 0, 1, 0},
-        });
+        GridRenderer gridRenderer = new GridRenderer();
 
-        view = new Matrix4f().scale(100);
+        view = new Matrix4f().scale(40);
 
-        Box player = new Box(4, 4, 1, 1);
+        LevelInfo level = LevelInfo.loadLevel("level1.txt");
+        gridRenderer.loadGrid(level.data);
+        Grid grid = new Grid(level.data);
+        Box player = new Box(level.player.x, level.player.y, 1, 1);
+        Vector2f playerMotion = new Vector2f(0);
         Box collider = new Box(6, 4, 2, 1);
 
         double currentTime = glfwGetTime(), lastTime = currentTime;
@@ -85,27 +77,42 @@ public class Main {
             }
 
             Vector2f keyMove = new Vector2f(0);
-
+            Vector2f playerMove = new Vector2f(0);
             if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) keyMove.y++;
             if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) keyMove.y--;
             if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) keyMove.x++;
             if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) keyMove.x--;
+            playerMove.add(keyMove.mul(delta * 3));
 
-            player.add(keyMove.mul(delta * 3));
-            player.add(Box.resolve(collider, player));
+//            player.add(Box.resolve(collider, player));
+            playerMotion.add(0, delta);
+//            playerMove.add(playerMotion);
+            if(playerMove.y != 0) {
+                player.add(new Vector2f(0, playerMove.y));
+                for (Box box : grid.getCollidingBoxes(player)) {
+                    Vector2f resolve = Box.resolveY(box, player);
+                    player.add(resolve);
+                }
+            }
+            if(playerMove.x != 0) {
+                player.add(new Vector2f(playerMove.x, 0));
+                for (Box box : grid.getCollidingBoxes(player)) {
+                    Vector2f resolve = Box.resolveX(box, player);
+                    player.add(resolve);
+                }
+            }
 
             glClear(GL_COLOR_BUFFER_BIT);
 
+            Matrix4f gridMatrix = new Matrix4f().translate(0, 0, 0).scale(1);
+            gridRenderer.draw(new Matrix4f(proj).mul(view).mul(gridMatrix));
+
             Matrix4f playerMatrix = new Matrix4f(proj).mul(view).mul(player.getMatrix());
             boxRenderer.draw(playerMatrix, new Vector4f(1, 1, 0, 1));
-            Matrix4f colliderMatrix = new Matrix4f(proj).mul(view).mul(collider.getMatrix());
-            boxRenderer.draw(colliderMatrix, new Vector4f(1, 1, 1, 1));
-
-            Matrix4f test = new Matrix4f().translate(50, 50, 0).scale(1);
-            gridRenderer.draw(new Matrix4f(proj).mul(view).mul(test));
+//            Matrix4f colliderMatrix = new Matrix4f(proj).mul(view).mul(collider.getMatrix());
+//            boxRenderer.draw(colliderMatrix, new Vector4f(1, 1, 1, 1));
 
             arial.draw("FPS: " + fps, 0, 24, proj);
-            arial.draw("Test test\ntest test TEST \n\nTest", 800, 1000, proj);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

@@ -9,7 +9,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 
-public class TileGridRenderer {
+public class GridRenderer {
 
     private int shader;
     private int shaderMatrix;
@@ -20,7 +20,7 @@ public class TileGridRenderer {
     private int vertexCount;
     private boolean loaded = false;
 
-    public TileGridRenderer() {
+    public GridRenderer() {
         int vertex = Shaders.createShader("texturev.glsl", GL_VERTEX_SHADER);
         int fragment = Shaders.createShader("texturef.glsl", GL_FRAGMENT_SHADER);
         shader = glCreateProgram();
@@ -33,25 +33,25 @@ public class TileGridRenderer {
         glUseProgram(shader);
         shaderMatrix = glGetUniformLocation(shader, "matrix");
         shaderSampler = glGetUniformLocation(shader, "sampler");
-        Main.checkGLError("Tile Grid Renderer shader init");
+        Main.checkGLError("Grid Renderer shader init");
 
         texture = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_FLOAT, new float[] {
-            1.0f, 1.0f, 1.0f, 1.0f,
-            0.0f, 0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f,
-        });
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_FLOAT, new float[] {
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_FLOAT, new float[] {
+//            1.0f, 1.0f, 1.0f, 1.0f,
+//            0.0f, 0.0f, 0.0f, 1.0f,
+//            0.0f, 0.0f, 0.0f, 1.0f,
 //            1.0f, 1.0f, 1.0f, 1.0f,
 //        });
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_FLOAT, new float[] {
+            1.0f, 1.0f, 1.0f, 1.0f,
+        });
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glGenerateMipmap(GL_TEXTURE_2D);
-        Main.checkGLError("test");
+        Main.checkGLError("Grid Renderer texture init");
     }
 
     public void loadGrid(byte[][] grid) {
