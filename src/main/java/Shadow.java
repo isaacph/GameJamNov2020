@@ -28,6 +28,19 @@ public class Shadow {
         return absMin(pusher.max - mover.min, -(mover.max - pusher.min));
     }
 
+    public static float[] resolveOptions(Shadow pusher, Shadow mover) {
+        if(!intersect(pusher, mover)) return new float[]{};
+        return new float[] {pusher.max - mover.min + 0.005f, -(mover.max - pusher.min + 0.005f)};
+    }
+
+    public static Vector2f[] groupMul(Vector2f v, float... f) {
+        Vector2f[] array = new Vector2f[f.length];
+        for(int i = 0; i < f.length; ++i) {
+            array[i] = new Vector2f(v).mul(f[i]);
+        }
+        return array;
+    }
+
     public static float min(float... points) {
         float min = points[0];
         for(int i = 1; i < points.length; ++i) {

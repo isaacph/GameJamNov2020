@@ -79,7 +79,7 @@ public class LevelInfo {
         if(input.length() == 1) {
             char c = input.charAt(0);
             if(c > '0' && c <= '9') {
-                return 1;
+                return 0;
             }
         }
         throw new RuntimeException("Unidentified tile input: " + input);

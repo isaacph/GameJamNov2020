@@ -4,6 +4,10 @@ import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -76,29 +80,74 @@ public class Main {
                 frameCounter = 0;
             }
 
-            Vector2f keyMove = new Vector2f(0);
             Vector2f playerMove = new Vector2f(0);
-            if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) keyMove.y++;
-            if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) keyMove.y--;
-            if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) keyMove.x++;
-            if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) keyMove.x--;
-            playerMove.add(keyMove.mul(delta * 3));
+//            Vector2f keyMove = new Vector2f(0);
+//            if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) keyMove.y++;
+//            if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) keyMove.y--;
+//            if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) keyMove.x++;
+//            if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) keyMove.x--;
+//            playerMove.add(keyMove.mul(delta * 3));
 
-//            player.add(Box.resolve(collider, player));
-            playerMotion.add(0, delta);
-//            playerMove.add(playerMotion);
-            if(playerMove.y != 0) {
-                player.add(new Vector2f(0, playerMove.y));
-                for (Box box : grid.getCollidingBoxes(player)) {
-                    Vector2f resolve = Box.resolveY(box, player);
-                    player.add(resolve);
+            playerMotion.add(0, delta * 0.5f);
+            playerMove.add(playerMotion);
+
+            player.add(playerMove);
+            while(playerMove.lengthSquared() > 0.0f) {
+                Vector2f partialMove = new Vector2f(playerMove);
+                if(partialMove.length() > 0.25f) {
+                    partialMove.normalize(0.25f);
                 }
-            }
-            if(playerMove.x != 0) {
-                player.add(new Vector2f(playerMove.x, 0));
+                playerMove.sub(partialMove);
+                player.add(partialMove);
+                List<Vector2f> resolveOptions = new ArrayList<>();
                 for (Box box : grid.getCollidingBoxes(player)) {
-                    Vector2f resolve = Box.resolveX(box, player);
-                    player.add(resolve);
+                    resolveOptions.addAll(Arrays.asList(Box.resolveOptions(box, player)));
+                }
+                Vector2f min = null;
+                for (int i = 0;
+                     i < resolveOptions.size();
+                     ++i) {
+                    Vector2f option = new Vector2f(resolveOptions.get(i));
+                    if (min == null || option.lengthSquared() < min.lengthSquared()) {
+                        Box playerWithOption = new Box(player);
+                        playerWithOption.add(option);
+                        boolean works = true;
+                        for (Box box : grid.getCollidingBoxes(playerWithOption)) {
+                            if (Box.intersect(box, playerWithOption)) {
+                                works = false;
+                                break;
+                            }
+                        }
+                        if (works) {
+                            min = option;
+                        }
+                    }
+                    Vector2f optionI = option;
+                    for (int j = i + 1;
+                         j < resolveOptions.size();
+                         ++j) {
+                        option = new Vector2f(optionI).add(resolveOptions.get(j));
+                        if (min == null || option.lengthSquared() < min.lengthSquared()) {
+                            Box playerWithOption = new Box(player);
+                            playerWithOption.add(option);
+                            boolean works = true;
+                            for (Box box : grid.getCollidingBoxes(playerWithOption)) {
+                                if (Box.intersect(box, playerWithOption)) {
+                                    works = false;
+                                    break;
+                                }
+                            }
+                            if (works) {
+                                min = option;
+                            }
+                        }
+                    }
+                }
+                if (min != null) {
+                    player.add(min);
+                    if (min.y < 0) {
+                        playerMotion.y = 0;
+                    }
                 }
             }
 
@@ -109,8 +158,21 @@ public class Main {
 
             Matrix4f playerMatrix = new Matrix4f(proj).mul(view).mul(player.getMatrix());
             boxRenderer.draw(playerMatrix, new Vector4f(1, 1, 0, 1));
-//            Matrix4f colliderMatrix = new Matrix4f(proj).mul(view).mul(collider.getMatrix());
-//            boxRenderer.draw(colliderMatrix, new Vector4f(1, 1, 1, 1));
+
+//            for(int i = 0; i < resolveOptions.size(); ++i) {
+//                Vector2f option = resolveOptions.get(i);
+//                Matrix4f mat = new Matrix4f(proj).mul(view);
+//                mat.translate(player.x, player.y, 0);
+//                mat.translate(option.x, option.y, 0);
+//                boxRenderer.draw(mat, new Vector4f(1, 0, 0, 0.1f));
+//            }
+//            if(min != null) {
+//                Vector2f option = min;
+//                Matrix4f mat = new Matrix4f(proj).mul(view);
+//                mat.translate(player.x, player.y, 0);
+//                mat.translate(option.x, option.y, 0);
+//                boxRenderer.draw(mat, new Vector4f(0, 1, 1, 0.4f));
+//            }
 
             arial.draw("FPS: " + fps, 0, 24, proj);
 

@@ -1,6 +1,9 @@
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class Box {
 
     public float x, y, width, height;
@@ -22,6 +25,10 @@ public class Box {
         this.y = y;
         this.width = width;
         this.height = height;
+    }
+
+    public Box(Box other) {
+        this(other.x, other.y, other.width, other.height);
     }
 
     public void add(Vector2f offset) {
@@ -62,6 +69,27 @@ public class Box {
                 b.shadow(new Vector2f(0, 1)));
     }
 
+    public static Vector2f[] resolveOptions(Box pusher, Box mover) {
+        ArrayList<Vector2f> options = new ArrayList<>();
+        Vector2f[] basis = new Vector2f[] {
+            new Vector2f(1, 0),
+            new Vector2f(0, 1)
+        };
+        for(Vector2f v : basis) {
+            Shadow a = pusher.shadow(v);
+            Shadow b = mover.shadow(v);
+            if(!Shadow.intersect(a, b)) {
+                return new Vector2f[0];
+            }
+            options.addAll(Arrays.asList(Shadow.groupMul(v, Shadow.resolveOptions(a, b))));
+        }
+        return options.toArray(new Vector2f[0]);
+    }
+
+    public static Vector2f resolve(Box pusher, Box mover) {
+        return Shadow.absMin(resolveOptions(pusher, mover));
+    }
+
     public static Vector2f resolveX(Box pusher, Box mover) {
         if(!intersect(pusher, mover)) {
             return new Vector2f(0);
@@ -78,9 +106,5 @@ public class Box {
         return new Vector2f(0, Shadow.resolveIntersect(
             pusher.shadow(new Vector2f(0, 1)), mover.shadow(new Vector2f(0, 1))
         ));
-    }
-
-    public static Vector2f resolve(Box pusher, Box mover) {
-        return Shadow.absMin(resolveX(pusher, mover), resolveY(pusher, mover));
     }
 }
