@@ -11,19 +11,21 @@ public class LevelInfo {
     public byte[][] data;
     public List<Magnet> magnets;
     public Vector2f player;
+    public Vector2f goal;
 
     public LevelInfo() {
         this(new byte[][]{});
     }
 
     public LevelInfo(byte[][] data) {
-        this(data, Collections.emptyList(), new Vector2f(0, 0));
+        this(data, Collections.emptyList(), new Vector2f(0, 0), new Vector2f(-5, -5));
     }
 
-    public LevelInfo(byte[][] data, List<Magnet> magnets, Vector2f player) {
+    public LevelInfo(byte[][] data, List<Magnet> magnets, Vector2f player, Vector2f goal) {
         this.data = data;
         this.magnets = magnets;
         this.player = player;
+        this.goal = goal;
     }
 
     public static LevelInfo loadLevel(String path) {
@@ -44,6 +46,7 @@ public class LevelInfo {
         width = file.get(0).split("\\s").length;
         byte[][] data = new byte[height][width];
         List<Magnet> magnets = new ArrayList<>();
+        Vector2f goal = new Vector2f(-5, -5);
 
         for(int row = 0; row < height; ++row) {
             String[] split = file.get(row).split("\\s");
@@ -56,6 +59,10 @@ public class LevelInfo {
                 fill[col] = getTileID(split[col]);
                 Magnet m = getMagnet(split[col], col, row);
                 if(m != null) magnets.add(m);
+                if(split[col].equals("G")) {
+                    System.out.println(col + ", " + row);
+                    goal = new Vector2f(col + 0.5f, row + 0.5f);
+                }
             }
         }
 
@@ -65,7 +72,7 @@ public class LevelInfo {
         }
         Vector2f player = new Vector2f(Float.parseFloat(posStr[0]), Float.parseFloat(posStr[1]));
 
-        return new LevelInfo(data, magnets, player);
+        return new LevelInfo(data, magnets, player, goal);
     }
 
     public static byte getTileID(String input) {
@@ -90,7 +97,7 @@ public class LevelInfo {
         if(input.length() == 1) {
             char c = input.charAt(0);
             if(c > '0' && c <= '9') {
-                return new Magnet(x, y, c - '0');
+                return new Magnet(x + 0.5f, y + 0.5f, c - '0');
             }
         }
         return null;

@@ -236,6 +236,15 @@ public class Font {
         }
     }
 
+    public float textWidth(String text) {
+        if(text.isEmpty()) return 0;
+        float width = lsb[text.charAt(0)];
+        for(char c : text.toCharArray()) {
+            width += advance[c];
+        }
+        return width;
+    }
+
     public void cleanUp() {
         glDeleteProgram(shader);
         glDeleteVertexArrays(vao);

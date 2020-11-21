@@ -3,6 +3,8 @@ import org.joml.Vector2f;
 public class Magnet {
 
     public float x, y, strength;
+    public boolean using = false;
+    public boolean inRange = false;
 
     public Magnet() {
         this(0, 0, 1);
