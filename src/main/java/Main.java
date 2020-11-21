@@ -25,7 +25,7 @@ public class Main {
     private int squareVao;
     private int squareVbo;
 
-    private Matrix4f proj = new Matrix4f();
+    private Matrix4f proj = new Matrix4f(), view = new Matrix4f();
 
     private static final float[] squareCoords = {
         -0.5f, -0.5f,
@@ -104,7 +104,24 @@ public class Main {
             {1, 0, 1, 0},
         });
 
+        double currentTime = glfwGetTime(), lastTime = currentTime;
+        double delta;
+        double fpsTime = 0;
+        int frameCounter = 0;
+        int fps = 0;
         while ( !glfwWindowShouldClose(window) ) {
+            currentTime = glfwGetTime();
+            delta = currentTime - lastTime;
+            lastTime = currentTime;
+
+            fpsTime += delta;
+            ++frameCounter;
+            if(fpsTime > 0.5) {
+                fpsTime -= 0.5;
+                fps = frameCounter * 2;
+                frameCounter = 0;
+            }
+
             glClear(GL_COLOR_BUFFER_BIT);
 
             try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -115,14 +132,14 @@ public class Main {
                 glUseProgram(simpleShader);
                 glBindVertexArray(squareVao);
                 glUniform4f(simpleColor, 1, 1, 0, 0.5f);
-                glUniformMatrix4fv(simpleMatrix, false, new Matrix4f(proj).mul(test).get(buffer));
+                glUniformMatrix4fv(simpleMatrix, false, new Matrix4f(proj).mul(view).mul(test).get(buffer));
                 glDrawArrays(GL_TRIANGLES, 0, 6);
             }
 
             Matrix4f test = new Matrix4f().translate(50, 50, 0).scale(100);
-            gridRenderer.draw(new Matrix4f(proj).mul(test));
+            gridRenderer.draw(new Matrix4f(proj).mul(view).mul(test));
 
-            arial.draw("Hello World!", 800, 800, proj);
+            arial.draw("FPS: " + fps, 0, 24, proj);
             arial.draw("Test test\ntest test TEST \n\nTest", 800, 1000, proj);
 
             glfwSwapBuffers(window);
