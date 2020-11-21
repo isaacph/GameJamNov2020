@@ -98,22 +98,32 @@ public class Main {
         });
         this.resize(800, 600);
 
+        TileGridRenderer gridRenderer = new TileGridRenderer();
+        gridRenderer.loadGrid(new byte[][]{
+            {1, 1, 1, 1},
+            {1, 0, 1, 0},
+        });
+
         while ( !glfwWindowShouldClose(window) ) {
             glClear(GL_COLOR_BUFFER_BIT);
 
             try(MemoryStack stack = MemoryStack.stackPush()) {
                 Matrix4f test = new Matrix4f();
-                test.translate(400, 100, 0);
+                test.translate(800, 50, 0);
                 test.scale(100);
                 FloatBuffer buffer = stack.mallocFloat(16);
                 glUseProgram(simpleShader);
                 glBindVertexArray(squareVao);
-                glUniform4f(simpleColor, 1, 1, 1, 1);
+                glUniform4f(simpleColor, 1, 1, 0, 0.5f);
                 glUniformMatrix4fv(simpleMatrix, false, new Matrix4f(proj).mul(test).get(buffer));
                 glDrawArrays(GL_TRIANGLES, 0, 6);
             }
 
+            Matrix4f test = new Matrix4f().translate(50, 50, 0).scale(100);
+            gridRenderer.draw(new Matrix4f(proj).mul(test));
+
             arial.draw("Hello World!", 800, 800, proj);
+            arial.draw("Test test\ntest test TEST \n\nTest", 800, 1000, proj);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

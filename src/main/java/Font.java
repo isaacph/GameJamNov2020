@@ -234,7 +234,6 @@ public class Font {
                 }
             }
         }
-        Main.checkGLError("test");
     }
 
     public void cleanUp() {
