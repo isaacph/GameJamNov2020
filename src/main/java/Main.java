@@ -1,19 +1,40 @@
-import org.lwjgl.*;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import org.lwjgl.system.*;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
-import java.nio.*;
+import java.nio.FloatBuffer;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryStack.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
 
     private long window;
+
+    private int simpleShader;
+    private int simpleMatrix;
+    private int simpleColor;
+
+    private int squareVao;
+    private int squareVbo;
+
+    private Matrix4f proj = new Matrix4f();
+
+    private static final float[] squareCoords = {
+        -0.5f, -0.5f,
+        -0.5f, 0.5f,
+        0.5f, 0.5f,
+        0.5f, 0.5f,
+        0.5f, -0.5f,
+        -0.5f, -0.5f,
+    };
 
     public void run() {
         GLFWErrorCallback.createPrint(System.err).set();
@@ -22,7 +43,7 @@ public class Main {
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        window = glfwCreateWindow(800, 600, "Hello World!", NULL, NULL);
+        window = glfwCreateWindow(800, 600, "Momentum", NULL, NULL);
         if ( window == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
@@ -39,14 +60,62 @@ public class Main {
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
+        {
+            int vertex = Shaders.createShader("simplev.glsl", GL_VERTEX_SHADER);
+            int fragment = Shaders.createShader("simplef.glsl", GL_FRAGMENT_SHADER);
+            simpleShader = glCreateProgram();
+            glAttachShader(simpleShader, vertex);
+            glAttachShader(simpleShader, fragment);
+            glBindAttribLocation(simpleShader, Shaders.Attribute.POSITION.position, "position");
+            glLinkProgram(simpleShader);
+            Shaders.checkLinking(simpleShader);
+            glUseProgram(simpleShader);
+            simpleMatrix = glGetUniformLocation(simpleShader, "matrix");
+            simpleColor = glGetUniformLocation(simpleShader, "color");
+            glDeleteShader(vertex);
+            glDeleteShader(fragment);
+            checkGLError("Shader link simple " + simpleShader);
+        }
+
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            squareVao = glGenVertexArrays();
+            glBindVertexArray(squareVao);
+            squareVbo = glGenBuffers();
+            FloatBuffer squareVerts = stack.mallocFloat(squareCoords.length);
+            squareVerts.put(squareCoords);
+            squareVerts.flip();
+            glBindBuffer(GL_ARRAY_BUFFER, squareVbo);
+            glBufferData(GL_ARRAY_BUFFER, squareVerts, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(Shaders.Attribute.POSITION.position);
+            glVertexAttribPointer(Shaders.Attribute.POSITION.position,
+                2, GL_FLOAT, false, 0, 0);
+        }
+
+        glfwSetWindowSizeCallback(window, (long window, int width, int height) -> {
+            this.resize(width, height);
+        });
+        this.resize(800, 600);
+
         while ( !glfwWindowShouldClose(window) ) {
             glClear(GL_COLOR_BUFFER_BIT);
 
-
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                Matrix4f test = new Matrix4f();
+                test.translate(100, 100, 0);
+                test.scale(100);
+                FloatBuffer buffer = stack.mallocFloat(16);
+                glUseProgram(simpleShader);
+                glBindVertexArray(squareVao);
+                glUniform4f(simpleColor, 1, 1, 1, 1);
+                glUniformMatrix4fv(simpleMatrix, false, new Matrix4f(proj).mul(test).get(buffer));
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+            }
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+
+        glDeleteProgram(simpleShader);
 
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
@@ -55,7 +124,20 @@ public class Main {
         glfwSetErrorCallback(null).free();
     }
 
+    public void resize(int width, int height) {
+        glViewport(0, 0, width, height);
+        proj.setOrtho(0.0f, width, height, 0.0f, 0.0f, 1.0f);
+    }
+
     public static void main(String... args) {
         new Main().run();
+    }
+
+    public static void checkGLError(String message) {
+        int err = glGetError();
+        if(err != 0)
+        {
+            throw new RuntimeException("OpenGL error: " + err + "\n" + message);
+        }
     }
 }

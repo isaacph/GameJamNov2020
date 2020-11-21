@@ -1,4 +1,7 @@
+#version 330 core
 uniform vec4 color;
-void main() {
-    gl_FragColor = color.w * vec4(color.x, color.y, color.z, 1.0);
+out vec4 outColor;
+void main()
+{
+    outColor = vec4(1);
 }
