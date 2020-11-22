@@ -42,7 +42,7 @@ public class Main {
         gridRenderer.loadGrid(level.data);
         grid = new Grid(level.data);
         magnets = level.magnets;
-        player = new Box(level.player.x, level.player.y, 1, 1);
+        player = new Box(level.player.x, level.player.y, 0.9f, 0.9f);
         playerMotion = new Vector2f(0);
         goal = new Box(level.goal.x, level.goal.y, 3, 3);
         win = false;
@@ -97,7 +97,7 @@ public class Main {
                 timer = 0;
             }
             if(action == GLFW_PRESS) {
-                if(key >= GLFW_KEY_1 && key <= GLFW_KEY_9) {
+                if(key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
                     loadLevel("level" + (key - GLFW_KEY_0) + ".txt");
                 }
             }
@@ -224,7 +224,7 @@ public class Main {
                     }
                     if(decX) {
                         float dec = -Math.signum(playerMotion.x) * delta * 20.0f;
-                        if(Math.abs(playerMotion.x) >= Math.abs(dec)) {
+                        if(playerMotion.length() >= Math.abs(dec)) {
                             playerMotion.x += dec;
                         } else {
                             playerMotion.x = 0;
@@ -232,7 +232,7 @@ public class Main {
                     }
                     if(decY) {
                         float dec = -Math.signum(playerMotion.y) * delta * 20.0f;
-                        if(Math.abs(playerMotion.y) >= Math.abs(dec)) {
+                        if(playerMotion.length()  >= Math.abs(dec)) {
                             playerMotion.y += dec;
                         } else {
                             playerMotion.y = 0;
