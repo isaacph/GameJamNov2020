@@ -39,6 +39,8 @@ public class Main {
     private DecimalFormat format = new DecimalFormat("0.00");
     private Rocket rocket;
 
+    private SoundPlayer sound;
+
     private void loadLevel(String path) {
         level = LevelInfo.loadLevel(path);
         gridRenderer.loadGrid(level.data);
@@ -90,6 +92,7 @@ public class Main {
         Texture crystalImage = new Texture("crystal.png");
         Texture playerImage = new Texture("falling_astronaut.png");
         rocket = new Rocket();
+        sound = new SoundPlayer();
 
         background = new Background();
 
@@ -113,6 +116,11 @@ public class Main {
                 }
             }
         });
+
+        float magnetSoundDelay = 0.5f;
+        float magnetSoundTimer = 0;
+
+        boolean fallLast = false;
 
         double currentTime = glfwGetTime(), lastTime = currentTime;
         float delta;
@@ -157,8 +165,19 @@ public class Main {
                     }
                 }
             }
+            if(!fall && fallLast) {
+                sound.play(Sound.MAGNET);
+            }
+            fallLast = fall;
             if(fall) {
                 playerMotion.add(0, delta * 7.0f);
+                sound.stopAll(Sound.MAGNET);
+            } else {
+                magnetSoundTimer += delta;
+                if(magnetSoundTimer > magnetSoundDelay) {
+                    sound.play(Sound.MAGNET);
+                    magnetSoundTimer = 0;
+                }
             }
             if(playerMotion.length() > 25) {
                 playerMotion.normalize(25);
@@ -225,12 +244,16 @@ public class Main {
                         playerMotion.y = -playerMotion.y * 0.5f;
                         if(Math.abs(playerMotion.y) < 0.5f) {
                             playerMotion.y = 0;
+                        } else {
+                            sound.play(Sound.HIT);
                         }
                     }
                     if (min.x != 0) {
                         playerMotion.x = -playerMotion.x * 0.5f;
                         if(Math.abs(playerMotion.x) < 0.5f) {
                             playerMotion.x = 0;
+                        } else {
+                            sound.play(Sound.HIT);
                         }
                     }
                     if(decX) {
@@ -255,11 +278,14 @@ public class Main {
             if(Box.intersect(player, goal)) {
                 win = true;
                 rocket.start();
+                sound.play(Sound.ROCKET);
                 player.x = -1000;
             }
             if(!win) {
                 timer += delta;
             }
+
+            sound.update(delta);
 
             glClear(GL_COLOR_BUFFER_BIT);
 
@@ -315,6 +341,7 @@ public class Main {
         gridRenderer.cleanUp();
         background.cleanUp();
         rocket.cleanUp();
+        sound.cleanUp();
 
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
@@ -324,6 +351,7 @@ public class Main {
     }
 
     public void resize(int width, int height) {
+        if(!(width > 0 && height > 0)) return;
         glViewport(0, 0, width, height);
         proj.setOrtho(0.0f, width, height, 0.0f, 0.0f, 1.0f);
         float levelScale;
