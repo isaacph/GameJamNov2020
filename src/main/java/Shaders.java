@@ -1,5 +1,8 @@
 import org.lwjgl.BufferUtils;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,9 +14,12 @@ public final class Shaders {
 
     public static int createShader(String path, int type) {
         try {
-            String content = String.join("\n", Files.readAllLines(
-                Paths.get(Shaders.class.getClassLoader().getResource(path).toURI())));
-//            System.out.println("Shader " + path + "\n" + content);
+            InputStream stream = Shaders.class.getResourceAsStream(path);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            StringBuffer content = new StringBuffer();
+            while(reader.ready()) {
+                content.append(reader.readLine()).append("\n");
+            }
             int shader = glCreateShader(type);
             glShaderSource(shader, content);
             glCompileShader(shader);

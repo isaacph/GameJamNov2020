@@ -121,12 +121,6 @@ public class Main {
             }
 
             Vector2f playerMove = new Vector2f(0);
-//            Vector2f keyMove = new Vector2f(0);
-//            if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) keyMove.y++;
-//            if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) keyMove.y--;
-//            if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) keyMove.x++;
-//            if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) keyMove.x--;
-//            playerMove.add(keyMove.mul(delta * 3));
 
             for(Magnet magnet : magnets) {
                 magnet.inRange = false;
@@ -143,16 +137,14 @@ public class Main {
                         parallel = new Vector2f(diff).normalize().mul(new Vector2f(diff).normalize().dot(playerMotion));
                         perp = new Vector2f(playerMotion).sub(parallel);
                         playerMotion.add(new Vector2f(diff).normalize().mul((perp.lengthSquared() / diff.length()) * delta));
-//                        playerMotion.add(new Vector2f(diff).normalize((magnet.strength / 100.0f) / diff.lengthSquared()));
-//                        Vector2f parallel = new Vector2f(diff).normalize(new Vector2f(diff).normalize().dot(playerMotion));
-//                        Vector2f perp = new Vector2f(playerMotion).sub(parallel);
-//                        playerMotion.add(new Vector2f(diff).normalize(perp.lengthSquared() / diff.length() * delta * 50));
-//                        playerMotion.add(new Vector2f(diff).normalize(0.5f * delta));
                     }
                 }
             }
             if(fall) {
                 playerMotion.add(0, delta * 8.0f);
+            }
+            if(playerMotion.length() > 20) {
+                playerMotion.normalize(20);
             }
             playerMove.add(new Vector2f(playerMotion).mul(delta));
             --bounceFrameCD;
@@ -213,17 +205,14 @@ public class Main {
                     decX = min.y != 0;
                     decY = min.x != 0;
                     if (min.y != 0) {
-                        playerMotion.y = -playerMotion.y * 0.7f;
-                        if(Math.abs(playerMotion.y) < 0.01f) {
+                        playerMotion.y = -playerMotion.y * 0.5f;
+                        if(Math.abs(playerMotion.y) < 0.5f) {
                             playerMotion.y = 0;
-//                            System.out.println("y reset");
                         }
-//                            System.out.println("y bounce");
-
                     }
                     if (min.x != 0) {
-                        playerMotion.x = -playerMotion.x * 0.7f;
-                        if(Math.abs(playerMotion.x) < 0.01f) {
+                        playerMotion.x = -playerMotion.x * 0.5f;
+                        if(Math.abs(playerMotion.x) < 0.5f) {
                             playerMotion.x = 0;
                         }
                     }
@@ -276,21 +265,6 @@ public class Main {
                 boxRenderer.draw(new Matrix4f(proj).translate(windowWidth / 2.0f, windowHeight / 2.0f, 0).scale(300), new Vector4f(1, 1, 1, 1));
                 bigArial.draw("Victory!", windowWidth / 2.0f - bigArial.textWidth("Victory") / 2.0f, windowHeight / 2.0f + 16.0f, new Matrix4f(proj), new Vector4f(0, 0, 0, 1));
             }
-
-//            for(int i = 0; i < resolveOptions.size(); ++i) {
-//                Vector2f option = resolveOptions.get(i);
-//                Matrix4f mat = new Matrix4f(proj).mul(view);
-//                mat.translate(player.x, player.y, 0);
-//                mat.translate(option.x, option.y, 0);
-//                boxRenderer.draw(mat, new Vector4f(1, 0, 0, 0.1f));
-//            }
-//            if(min != null) {
-//                Vector2f option = min;
-//                Matrix4f mat = new Matrix4f(proj).mul(view);
-//                mat.translate(player.x, player.y, 0);
-//                mat.translate(option.x, option.y, 0);
-//                boxRenderer.draw(mat, new Vector4f(0, 1, 1, 0.4f));
-//            }
 
             boxRenderer.draw(new Matrix4f(proj).translate(50, 13, 0).scale(100, 26, 0), new Vector4f(0, 0, 0, 0.4f));
             arial.draw("FPS: " + fps, 0, 24, proj);

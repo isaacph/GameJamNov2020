@@ -1,5 +1,8 @@
 import org.joml.Vector2f;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -29,10 +32,13 @@ public class LevelInfo {
     }
 
     public static LevelInfo loadLevel(String path) {
-        List<String> file;
+        List<String> file = new ArrayList<>();
         try {
-            file = Files.readAllLines(
-                Paths.get(Shaders.class.getClassLoader().getResource(path).toURI()));
+            InputStream stream = Shaders.class.getResourceAsStream(path);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            while(reader.ready()) {
+                file.add(reader.readLine());
+            }
         } catch(Exception e) {
             System.err.println("Error loading grid " + path);
             e.printStackTrace();
