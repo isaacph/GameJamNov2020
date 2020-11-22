@@ -34,17 +34,20 @@ public class Main {
     private float timer;
 
     private GridRenderer gridRenderer;
+    private Background background;
 
     private DecimalFormat format = new DecimalFormat("0.00");
+    private Rocket rocket;
 
     private void loadLevel(String path) {
         level = LevelInfo.loadLevel(path);
         gridRenderer.loadGrid(level.data);
         grid = new Grid(level.data);
         magnets = level.magnets;
-        player = new Box(level.player.x, level.player.y, 0.9f, 0.9f);
+        player = new Box(level.player.x, level.player.y, 0.75f, 0.9f);
         playerMotion = new Vector2f(0);
-        goal = new Box(level.goal.x, level.goal.y, 3, 3);
+        rocket.reset(level.goal.x, level.goal.y);
+        goal = rocket.physBox;
         win = false;
         this.resize((int) windowWidth, (int) windowHeight);
         timer = 0;
@@ -82,7 +85,13 @@ public class Main {
         CircleRenderer circleRenderer = new CircleRenderer();
         Font arial = new Font("arial.ttf", 32, 512, 512);
         Font bigArial = new Font("arial.ttf", 64, 512, 512);
+        TextureRenderer textureRenderer = new TextureRenderer();
         gridRenderer = new GridRenderer();
+        Texture crystalImage = new Texture("crystal.png");
+        Texture playerImage = new Texture("falling_astronaut.png");
+        rocket = new Rocket();
+
+        background = new Background();
 
         loadLevel("level1.txt");
 
@@ -95,6 +104,8 @@ public class Main {
                 playerMotion.zero();
                 win = false;
                 timer = 0;
+                rocket.reset(level.goal.x, level.goal.y);
+                goal = rocket.physBox;
             }
             if(action == GLFW_PRESS) {
                 if(key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
@@ -243,6 +254,8 @@ public class Main {
 
             if(Box.intersect(player, goal)) {
                 win = true;
+                rocket.start();
+                player.x = -1000;
             }
             if(!win) {
                 timer += delta;
@@ -250,20 +263,30 @@ public class Main {
 
             glClear(GL_COLOR_BUFFER_BIT);
 
+            background.draw(proj, delta);
+
             Matrix4f gridMatrix = new Matrix4f().translate(0, 0, 0).scale(1);
             gridRenderer.draw(new Matrix4f(proj).mul(view).mul(gridMatrix));
 
             Matrix4f playerMatrix = new Matrix4f(proj).mul(view).mul(player.getMatrix());
-            boxRenderer.draw(playerMatrix, new Vector4f(1, 1, 0, 1));
-            boxRenderer.draw(new Matrix4f(proj).mul(view).mul(goal.getMatrix()), new Vector4f(0, 1, 1, 0.5f));
+            if(!win) {
+                playerImage.bind();
+                playerMatrix.scale(0.9f / 0.75f, 1, 0);
+                if (playerMotion.x < 0) {
+                    playerMatrix.scale(-1, 1, 0);
+                }
+                textureRenderer.draw(playerMatrix, new Vector4f(1));
+            }
+//            boxRenderer.draw(new Matrix4f(proj).mul(view).mul(goal.getMatrix()), new Vector4f(0, 1, 1, 0.5f));
 
             for(Magnet magnet : magnets) {
                 Vector4f color = !magnet.inRange ? new Vector4f(0, 1, 0, 1)
                     : magnet.using ? new Vector4f(1, 0, 0, 1)
                     : new Vector4f(0, 0, 1, 1);
                 Matrix4f mat = new Matrix4f(proj).mul(view).translate(magnet.x, magnet.y, 0);
-                mat.rotate((float) Math.PI / 4.0f, 0, 0, 1);
-                boxRenderer.draw(mat, color);
+//                mat.rotate((float) Math.PI / 4.0f, 0, 0, 1);
+                crystalImage.bind();
+                textureRenderer.draw(mat, color);
                 circleRenderer.draw(new Matrix4f(proj).mul(view), magnet.getCenter(), magnet.strength, 0.1f,
                     color);
                 circleRenderer.draw(new Matrix4f(proj).mul(view), magnet.getCenter(), 2.0f, 0.1f,
@@ -275,6 +298,7 @@ public class Main {
                 bigArial.draw("Victory!", windowWidth / 2.0f - bigArial.textWidth("Victory") / 2.0f, windowHeight / 2.0f + 16.0f, new Matrix4f(proj), new Vector4f(0, 0, 0, 1));
                 arial.draw("Time: " + format.format(timer), windowWidth / 2.0f - arial.textWidth("Time: " + format.format(timer)) / 2.0f + 10, windowHeight / 2.0f + 64.0f, new Matrix4f(proj), new Vector4f(0, 0, 0, 1));
             }
+            rocket.draw(new Matrix4f(proj).mul(view), delta);
 
             boxRenderer.draw(new Matrix4f(proj).translate(50, 26, 0).scale(100, 52, 0), new Vector4f(0, 0, 0, 0.4f));
             arial.draw("FPS: " + fps + "\nTime: " + format.format(timer), 0, 24, proj);
@@ -283,9 +307,14 @@ public class Main {
             glfwPollEvents();
         }
 
+        textureRenderer.cleanUp();
+        circleRenderer.cleanUp();
+        crystalImage.cleanUp();
         arial.cleanUp();
         boxRenderer.cleanUp();
         gridRenderer.cleanUp();
+        background.cleanUp();
+        rocket.cleanUp();
 
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
@@ -310,6 +339,7 @@ public class Main {
         windowHeightTile = height / levelScale;
         windowWidth = width;
         windowHeight = height;
+        background.reset(width, height);
     }
 
     public static void main(String... args) {

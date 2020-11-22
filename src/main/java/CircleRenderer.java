@@ -36,6 +36,7 @@ public class CircleRenderer {
         glAttachShader(shader, vertex);
         glAttachShader(shader, fragment);
         glBindAttribLocation(shader, Shaders.Attribute.POSITION.position, "position");
+        glBindAttribLocation(shader, Shaders.Attribute.TEXTURE.position, "tex");
         glLinkProgram(shader);
         Shaders.checkLinking(shader);
         glUseProgram(shader);
