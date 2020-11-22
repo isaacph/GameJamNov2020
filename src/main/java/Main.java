@@ -4,6 +4,7 @@ import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,8 +31,11 @@ public class Main {
     private Vector2f playerMotion;
     private boolean win = false;
     private int bounceFrameCD = 0;
+    private float timer;
 
     private GridRenderer gridRenderer;
+
+    private DecimalFormat format = new DecimalFormat("0.00");
 
     private void loadLevel(String path) {
         level = LevelInfo.loadLevel(path);
@@ -43,6 +47,7 @@ public class Main {
         goal = new Box(level.goal.x, level.goal.y, 3, 3);
         win = false;
         this.resize((int) windowWidth, (int) windowHeight);
+        timer = 0;
     }
 
     public void run() {
@@ -89,6 +94,7 @@ public class Main {
                 player.y = level.player.y;
                 playerMotion.zero();
                 win = false;
+                timer = 0;
             }
             if(action == GLFW_PRESS) {
                 if(key >= GLFW_KEY_1 && key <= GLFW_KEY_9) {
@@ -141,10 +147,10 @@ public class Main {
                 }
             }
             if(fall) {
-                playerMotion.add(0, delta * 8.0f);
+                playerMotion.add(0, delta * 7.0f);
             }
-            if(playerMotion.length() > 20) {
-                playerMotion.normalize(20);
+            if(playerMotion.length() > 25) {
+                playerMotion.normalize(25);
             }
             playerMove.add(new Vector2f(playerMotion).mul(delta));
             --bounceFrameCD;
@@ -238,6 +244,9 @@ public class Main {
             if(Box.intersect(player, goal)) {
                 win = true;
             }
+            if(!win) {
+                timer += delta;
+            }
 
             glClear(GL_COLOR_BUFFER_BIT);
 
@@ -264,10 +273,11 @@ public class Main {
             if(win) {
                 boxRenderer.draw(new Matrix4f(proj).translate(windowWidth / 2.0f, windowHeight / 2.0f, 0).scale(300), new Vector4f(1, 1, 1, 1));
                 bigArial.draw("Victory!", windowWidth / 2.0f - bigArial.textWidth("Victory") / 2.0f, windowHeight / 2.0f + 16.0f, new Matrix4f(proj), new Vector4f(0, 0, 0, 1));
+                arial.draw("Time: " + format.format(timer), windowWidth / 2.0f - arial.textWidth("Time: " + format.format(timer)) / 2.0f + 10, windowHeight / 2.0f + 64.0f, new Matrix4f(proj), new Vector4f(0, 0, 0, 1));
             }
 
-            boxRenderer.draw(new Matrix4f(proj).translate(50, 13, 0).scale(100, 26, 0), new Vector4f(0, 0, 0, 0.4f));
-            arial.draw("FPS: " + fps, 0, 24, proj);
+            boxRenderer.draw(new Matrix4f(proj).translate(50, 26, 0).scale(100, 52, 0), new Vector4f(0, 0, 0, 0.4f));
+            arial.draw("FPS: " + fps + "\nTime: " + format.format(timer), 0, 24, proj);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

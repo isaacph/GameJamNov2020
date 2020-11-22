@@ -62,7 +62,7 @@ public class LevelInfo {
             }
             byte[] fill = data[row];
             for(int col = 0; col < width; ++col) {
-                fill[col] = getTileID(split[col]);
+                fill[col] = getTileID(split[col], row);
                 Magnet m = getMagnet(split[col], col, row);
                 if(m != null) magnets.add(m);
                 if(split[col].equals("G")) {
@@ -81,7 +81,7 @@ public class LevelInfo {
         return new LevelInfo(data, magnets, player, goal);
     }
 
-    public static byte getTileID(String input) {
+    public static byte getTileID(String input, int line) {
         switch(input) {
             case "G":
             case "0":
@@ -95,7 +95,7 @@ public class LevelInfo {
                 return 0;
             }
         }
-        throw new RuntimeException("Unidentified tile input: " + input);
+        throw new RuntimeException("Unidentified tile input: " + input + " on line " + line);
     }
 
     public static Magnet getMagnet(String input, float x, float y) {
