@@ -18,7 +18,7 @@ public class GridRenderer {
     private int shaderSampler;
     private int texture;
     private int vbo;
-    private int vao;
+//    private int vao;
     private int vertexCount;
     private boolean loaded = false;
     private TextureRenderer textureRenderer;
@@ -99,8 +99,8 @@ public class GridRenderer {
             }
             buffer.flip();
 
-            vao = glGenVertexArrays();
-            glBindVertexArray(vao);
+//            vao = glGenVertexArrays();
+//            glBindVertexArray(vao);
             vbo = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
             glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
@@ -154,17 +154,23 @@ public class GridRenderer {
         if(!loaded) return;
         loaded = false;
         glDeleteBuffers(vbo);
-        glDeleteVertexArrays(vao);
+//        glDeleteVertexArrays(vao);
         asteroidTexture.cleanUp();
     }
 
     private void setAttribPointers() {
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glEnableVertexAttribArray(Shaders.Attribute.POSITION.position);
         glVertexAttribPointer(Shaders.Attribute.POSITION.position,
             2, GL_FLOAT, false, 4 * 4, 0);
         glEnableVertexAttribArray(Shaders.Attribute.TEXTURE.position);
         glVertexAttribPointer(Shaders.Attribute.TEXTURE.position,
             2, GL_FLOAT, false, 4 * 4, 4 * 2);
+    }
+
+    private void unsetAttribPointers() {
+        glDisableVertexAttribArray(Shaders.Attribute.POSITION.position);
+        glDisableVertexAttribArray(Shaders.Attribute.TEXTURE.position);
     }
 
     public void draw(Matrix4f matrix) {
@@ -183,13 +189,15 @@ public class GridRenderer {
 
         try(MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer buffer = stack.mallocFloat(16);
-            glBindVertexArray(vao);
+//            glBindVertexArray(vao);
+            setAttribPointers();
             glUseProgram(shader);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture);
             glUniform1i(shaderSampler, 0);
             glUniformMatrix4fv(shaderMatrix, false, matrix.get(buffer));
             glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+            unsetAttribPointers();
         }
 
         glStencilFunc(GL_EQUAL, 1, 0xFF); // Pass test if stencil value is 1

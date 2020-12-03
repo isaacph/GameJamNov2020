@@ -15,7 +15,7 @@ public class BoxRenderer {
     private int simpleMatrix;
     private int simpleColor;
 
-    private int squareVao;
+//    private int squareVao;
     private int squareVbo;
 
     private static final float[] squareCoords = {
@@ -44,8 +44,8 @@ public class BoxRenderer {
         Main.checkGLError("Shader link simple " + simpleShader);
 
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            squareVao = glGenVertexArrays();
-            glBindVertexArray(squareVao);
+//            squareVao = glGenVertexArrays();
+//            glBindVertexArray(squareVao);
             squareVbo = glGenBuffers();
             FloatBuffer squareVerts = stack.mallocFloat(squareCoords.length);
             squareVerts.put(squareCoords);
@@ -63,16 +63,21 @@ public class BoxRenderer {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer buffer = stack.mallocFloat(16);
             glUseProgram(simpleShader);
-            glBindVertexArray(squareVao);
+//            glBindVertexArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, squareVbo);
+            glEnableVertexAttribArray(Shaders.Attribute.POSITION.position);
+            glVertexAttribPointer(Shaders.Attribute.POSITION.position,
+                2, GL_FLOAT, false, 4 * 2, 0);
             glUniform4f(simpleColor, color.x, color.y, color.z, color.w);
             glUniformMatrix4fv(simpleMatrix, false, matrix.get(buffer));
             glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDisableVertexAttribArray(Shaders.Attribute.POSITION.position);
         }
     }
 
     public void cleanUp() {
         glDeleteProgram(simpleShader);
-        glDeleteVertexArrays(squareVao);
+//        glDeleteVertexArrays(squareVao);
         glDeleteBuffers(squareVbo);
     }
 }

@@ -33,7 +33,7 @@ public class Font {
     private float lsb[] = new float[CHAR_COUNT];
     private float aHeight, AHeight;
     private int texture;
-    private int vao;
+//    private int vao;
     private int vbo;
 
     public Font(String source, int size, int bmpWidth, int bmpHeight) {
@@ -178,8 +178,8 @@ public class Font {
 //                vertices.put(vert);
 //                vertices.flip();
 
-                vao = glGenVertexArrays();
-                glBindVertexArray(vao);
+//                vao = glGenVertexArrays();
+//                glBindVertexArray(vao);
 
                 vbo = glGenBuffers();
                 glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -207,6 +207,17 @@ public class Font {
         if(text.length() == 0) {
             return;
         }
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glEnableVertexAttribArray(Shaders.Attribute.POSITION.position);
+        glVertexAttribPointer(Shaders.Attribute.POSITION.position,
+            2, GL_FLOAT, false, 4 * 4, 0);
+        glEnableVertexAttribArray(Shaders.Attribute.TEXTURE.position);
+        glVertexAttribPointer(Shaders.Attribute.TEXTURE.position,
+            2, GL_FLOAT, false, 4 * 4, 2 * 4);
+        glUseProgram(shader);
+        glUniform1i(shaderSampler, 0);
+        glActiveTexture(GL_TEXTURE0);
+        glUniform4f(shaderColor, color.x, color.y, color.z, color.w);
         try(MemoryStack stack = MemoryStack.stackPush()) {
             float currentX = x - lsb[text.charAt(0)], currentY = y;
             for(char c : text.toCharArray()) {
@@ -221,12 +232,7 @@ public class Font {
                     mat.translate(currentX, currentY, 0);
 //                    mat.scale(size);
 
-                    glBindVertexArray(vao);
-                    glUseProgram(shader);
-                    glUniform1i(shaderSampler, 0);
-                    glUniform4f(shaderColor, color.x, color.y, color.z, color.w);
                     glUniformMatrix4fv(shaderMatrix, false, new Matrix4f(proj).mul(mat).get(buffer));
-                    glActiveTexture(GL_TEXTURE0);
                     glBindTexture(GL_TEXTURE_2D, texture);
                     glDrawArrays(GL_TRIANGLES, (int) c*6, 6);
 
@@ -234,6 +240,8 @@ public class Font {
                 }
             }
         }
+        glDisableVertexAttribArray(Shaders.Attribute.POSITION.position);
+        glDisableVertexAttribArray(Shaders.Attribute.TEXTURE.position);
     }
 
     public float textWidth(String text) {
@@ -247,7 +255,7 @@ public class Font {
 
     public void cleanUp() {
         glDeleteProgram(shader);
-        glDeleteVertexArrays(vao);
+//        glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
     }
 }

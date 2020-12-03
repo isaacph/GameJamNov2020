@@ -17,7 +17,7 @@ public class TextureRenderer {
     private int shaderColor;
     private int shaderSampler;
 
-    private int squareVao;
+//    private int squareVao;
     private int squareVbo;
 
     private static final float[] squareCoords = {
@@ -48,8 +48,8 @@ public class TextureRenderer {
         Main.checkGLError("Shader link simple " + shader);
 
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            squareVao = glGenVertexArrays();
-            glBindVertexArray(squareVao);
+//            squareVao = glGenVertexArrays();
+//            glBindVertexArray(squareVao);
             squareVbo = glGenBuffers();
             FloatBuffer squareVerts = stack.mallocFloat(squareCoords.length);
             squareVerts.put(squareCoords);
@@ -68,19 +68,28 @@ public class TextureRenderer {
 
     public void draw(Matrix4f matrix, Vector4f color) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
+            glBindBuffer(GL_ARRAY_BUFFER, squareVbo);
+            glEnableVertexAttribArray(Shaders.Attribute.POSITION.position);
+            glVertexAttribPointer(Shaders.Attribute.POSITION.position,
+                2, GL_FLOAT, false, 4 * 4, 0);
+            glEnableVertexAttribArray(Shaders.Attribute.TEXTURE.position);
+            glVertexAttribPointer(Shaders.Attribute.TEXTURE.position,
+                2, GL_FLOAT, false, 4 * 4, 4 * 2);
             FloatBuffer buffer = stack.mallocFloat(16);
             glUseProgram(shader);
-            glBindVertexArray(squareVao);
+//            glBindVertexArray(squareVao);
             glUniform4f(shaderColor, color.x, color.y, color.z, color.w);
             glUniformMatrix4fv(shaderMatrix, false, matrix.get(buffer));
             glUniform1i(shaderSampler, 0);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDisableVertexAttribArray(Shaders.Attribute.POSITION.position);
+            glDisableVertexAttribArray(Shaders.Attribute.TEXTURE.position);
         }
     }
 
     public void cleanUp() {
         glDeleteProgram(shader);
-        glDeleteVertexArrays(squareVao);
+//        glDeleteVertexArrays(squareVao);
         glDeleteBuffers(squareVbo);
     }
 }
